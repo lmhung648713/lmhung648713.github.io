@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 Nim Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .game-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .piles-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin: 30px 0;
+            min-height: 100px;
+        }
+
+        .pile {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 15px;
+            font-size: 1.5em;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transition: transform 0.3s;
+        }
+
+        .pile:hover {
+            transform: translateY(-5px);
+        }
+
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .input-group {
+            margin: 20px 0;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        input, select {
+            width: 100%;
+            max-width: 300px;
+            padding: 12px;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #764ba2;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            margin: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .message {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .message.turn {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .message.win {
+            background: #d4edda;
+            color: #155724;
+            font-size: 1.5em;
+        }
+
+        .message.lose {
+            background: #f8d7da;
+            color: #721c24;
+            font-size: 1.5em;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .setup-screen, .game-screen {
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .turn-indicator {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 20px;
+            margin: 10px 0;
+        }
+
+        .your-turn {
+            background: #28a745;
+            color: white;
+        }
+
+        .system-turn {
+            background: #dc3545;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎮 NIM GAME</h1>
+            <p>Trò chơi chiến thuật cổ điển</p>
+        </div>
+
+        <div id="setupScreen" class="setup-screen">
+            <div class="game-info">
+                <h3>📋 Luật chơi:</h3>
+                <p>• Có nhiều đống với số lượng khác nhau</p>
+                <p>• Mỗi lượt, chọn một số để trừ từ TẤT CẢ các đống</p>
+                <p>• Số được chọn phải từ 1 đến giá trị nhỏ nhất hiện tại</p>
+                <p>• Người làm hết đống cuối cùng sẽ THẮNG! 🏆</p>
+            </div>
+
+            <div class="controls">
+                <div class="input-group">
+                    <label>👤 Ai đi trước?</label>
+                    <select id="firstPlayer">
+                        <option value="1">Bạn đi trước</option>
+                        <option value="0">Máy đi trước</option>
+                    </select>
+                </div>
+                <button onclick="startGame()">Bắt đầu chơi!</button>
+            </div>
+        </div>
+
+        <div id="gameScreen" class="game-screen hidden">
+            <div id="gameInfo" class="game-info"></div>
+            
+            <div id="message" class="message hidden"></div>
+
+            <div class="piles-container" id="pilesContainer"></div>
+
+            <div class="controls" id="playerControls">
+                <div class="input-group">
+                    <label id="inputLabel">Chọn số để trừ:</label>
+                    <input type="number" id="playerMove" min="1">
+                </div>
+                <button onclick="makeMove()">Xác nhận</button>
+            </div>
+
+            <div class="controls">
+                <button onclick="resetGame()">Chơi lại</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let piles = [];
+        let turn = 1;
+        let gameOver = false;
+
+        function startGame() {
+            const n = Math.floor(Math.random() * 6) + 5;
+            piles = [];
+            for (let i = 0; i < n; i++) {
+                piles.push(Math.floor(Math.random() * 20) + 1);
+            }
+            
+            turn = parseInt(document.getElementById('firstPlayer').value);
+            gameOver = false;
+
+            document.getElementById('setupScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.remove('hidden');
+
+            updateDisplay();
+            
+            if (turn === 0) {
+                setTimeout(systemMove, 1000);
+            }
+        }
+
+        function updateDisplay() {
+            document.getElementById('gameInfo').innerHTML = `
+                <strong>Số đống:</strong> ${piles.length}<br>
+                <strong>Giá trị nhỏ nhất:</strong> ${piles.length > 0 ? Math.min(...piles) : 0}
+            `;
+
+            const pilesContainer = document.getElementById('pilesContainer');
+            pilesContainer.innerHTML = '';
+            piles.forEach((value, index) => {
+                const pile = document.createElement('div');
+                pile.className = 'pile';
+                pile.textContent = value;
+                pilesContainer.appendChild(pile);
+            });
+
+            const maxMove = piles.length > 0 ? Math.min(...piles) : 0;
+            document.getElementById('playerMove').max = maxMove;
+            document.getElementById('inputLabel').textContent = `Chọn số để trừ (1 ~ ${maxMove}):`;
+
+            if (!gameOver)
+                updateTurnIndicator();
+        }
+
+        function updateTurnIndicator() {
+            const msg = document.getElementById('message');
+            msg.classList.remove('hidden', 'win', 'lose');
+            msg.classList.add('turn');
+            
+            if (turn === 1) {
+                msg.innerHTML = '<span class="turn-indicator your-turn">👉 LƯỢT CỦA BẠN</span>';
+                document.getElementById('playerControls').style.display = 'block';
+            } else {
+                msg.innerHTML = '<span class="turn-indicator system-turn">🤖 LƯỢT CỦA MÁY</span>';
+                document.getElementById('playerControls').style.display = 'none';
+            }
+        }
+
+        function updatePiles(num) {
+            piles = piles.map(v => v - num).filter(v => v > 0);
+        }
+
+        function makeMove() {
+            if (gameOver || turn !== 1) return;
+
+            const num = parseInt(document.getElementById('playerMove').value);
+            const mn = Math.min(...piles);
+
+            if (!num || num < 1 || num > mn) {
+                alert(`Vui lòng chọn số từ 1 đến ${mn}`);
+                return;
+            }
+
+            updatePiles(num);
+            document.getElementById('playerMove').value = '';
+
+            if (checkWin(1)) return;
+
+            turn = 0;
+            updateDisplay();
+            setTimeout(systemMove, 1500);
+        }
+
+        function systemMove() {
+            if (gameOver) return;
+
+            let num;
+            if (piles.length === 1) {
+                num = piles[0];
+            } else {
+                const mn = Math.min(...piles);
+                if (mn > 1) {
+                    const b = [...new Set(piles)].sort((a, b) => a - b);
+                    let j = 1;
+                    while (j < b.length && b[j] === b[j-1] + 1) {
+                        j++;
+                    }
+                    if (j === b.length) {
+                        num = j % 2 === 0 ? mn - 1 : mn;
+                    } else {
+                        num = j % 2 === 1 ? mn - 1 : mn;
+                    }
+                } else {
+                    num = 1;
+                }
+            }
+
+            const msg = document.getElementById('message');
+            msg.innerHTML = `<span class="turn-indicator system-turn">🤖 Máy chọn: ${num}</span>`;
+
+            setTimeout(() => {
+                updatePiles(num);
+                if (checkWin(0)) return;
+                turn = 1;
+                updateDisplay();
+            }, 1000);
+        }
+
+        function checkWin(player) {
+            if (piles.length === 0) {
+                gameOver = true;
+                const msg = document.getElementById('message');
+                msg.classList.remove('turn');
+                
+                if (player === 1) {
+                    msg.classList.add('win');
+                    msg.innerHTML = '🏆 CHÚC MỪNG! BẠN THẮNG! 🏆';
+                } else {
+                    msg.classList.add('lose');
+                    msg.innerHTML = '💀 BẠN THUA! HÃY THỬ LẠI! 💀';
+                }
+                
+                document.getElementById('playerControls').style.display = 'none';
+                updateDisplay();
+                return true;
+            }
+            return false;
+        }
+
+        function resetGame() {
+            document.getElementById('setupScreen').classList.remove('hidden');
+            document.getElementById('gameScreen').classList.add('hidden');
+            document.getElementById('message').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
